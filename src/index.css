@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply flex h-full min-h-screen w-full bg-gray-950 text-white;
+}
+
+#root {
+  @apply flex flex-1 items-center justify-center;
+}
