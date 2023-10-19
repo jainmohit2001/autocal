@@ -51,4 +51,44 @@ export class GoogleCalendar {
     document.body.appendChild(scriptGapi)
     document.body.appendChild(scriptGoogleClient)
   }
+
+  async authorize(): Promise<google.accounts.oauth2.TokenResponse> {
+    return new Promise<google.accounts.oauth2.TokenResponse>((res, rej) => {
+      const tokenClient = this.tokenClient
+      if (!tokenClient) {
+        rej('Invalid token client')
+        return
+      }
+
+      // Callback when the user provides access
+      tokenClient.callback = (resp) => {
+        if (resp.error !== undefined) {
+          console.error(resp.error)
+          rej(resp.error)
+          return
+        }
+        res(resp)
+      }
+
+      if (gapi.client.getToken() === null) {
+        tokenClient.requestAccessToken({ prompt: 'consent' })
+      } else {
+        tokenClient.requestAccessToken({ prompt: '' })
+      }
+    })
+  }
+
+  async singOut(): Promise<void> {
+    return new Promise<void>((res) => {
+      const token = gapi.client.getToken()
+      if (token !== null) {
+        google.accounts.oauth2.revoke(token.access_token, () => {
+          res()
+        })
+        gapi.client.setToken(null)
+        return
+      }
+      res()
+    })
+  }
 }
