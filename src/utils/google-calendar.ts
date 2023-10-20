@@ -57,6 +57,7 @@ export class GoogleCalendar {
       const tokenClient = this.tokenClient
       if (!tokenClient) {
         rej('Invalid token client')
+        gapi.client.setToken(null)
         return
       }
 
@@ -65,8 +66,10 @@ export class GoogleCalendar {
         if (resp.error !== undefined) {
           console.error(resp.error)
           rej(resp.error)
+          gapi.client.setToken(null)
           return
         }
+        gapi.client.setToken(resp)
         res(resp)
       }
 
@@ -78,7 +81,7 @@ export class GoogleCalendar {
     })
   }
 
-  async singOut(): Promise<void> {
+  async signOut(): Promise<void> {
     return new Promise<void>((res) => {
       const token = gapi.client.getToken()
       if (token !== null) {
@@ -89,6 +92,26 @@ export class GoogleCalendar {
         return
       }
       res()
+    })
+  }
+
+  async listEvents(): Promise<gapi.client.calendar.Event[]> {
+    return new Promise<gapi.client.calendar.Event[]>((res, rej) => {
+      const params: gapi.client.calendar.EventsListParameters = {
+        calendarId: 'primary',
+        maxResults: 20,
+        showDeleted: false,
+        maxAttendees: 4,
+        timeMin: new Date().toISOString(),
+      }
+      gapi.client.calendar.events
+        .list(params)
+        .then((resp) => {
+          res(resp.result.items)
+        })
+        .catch((e) => {
+          rej(e)
+        })
     })
   }
 }
