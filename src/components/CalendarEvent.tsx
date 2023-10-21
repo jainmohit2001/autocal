@@ -1,4 +1,5 @@
 import { GroupOutlined, EventOutlined } from '@mui/icons-material'
+import { Event } from 'gapi.calendar'
 
 const dateTimeFormat: Intl.DateTimeFormatOptions = {
   day: 'numeric',
@@ -9,7 +10,7 @@ const dateTimeFormat: Intl.DateTimeFormatOptions = {
   hour12: true,
 }
 
-function CalendarEvent(obj: gapi.client.calendar.Event) {
+function CalendarEvent(obj: Event) {
   const start = obj.start.date ?? obj.start.dateTime
   const end = obj.end.date ?? obj.end.dateTime
 
@@ -34,18 +35,26 @@ function CalendarEvent(obj: gapi.client.calendar.Event) {
   }
 
   return (
-    <div className='w-full p-2 sm:w-6/12 lg:w-4/12 2xl:w-3/12'>
+    <div className='w-full p-2 sm:w-6/12 lg:w-4/12 2xl:w-3/12' key={obj.id}>
       <a
         className='flex h-full flex-col gap-3 rounded-md bg-gray-100 p-2 text-black transition-all ease-in-out hover:scale-105'
         key={obj.id}
         href={obj.htmlLink}
         target='_blank'
       >
-        <p className='line-clamp-1 text-lg font-medium'>
-          {obj.summary && obj.summary.length > 0
-            ? obj.summary
-            : obj.description}
-        </p>
+        <div className='flex items-center gap-3'>
+          {obj.backgroundColor && (
+            <div
+              className='h-4 w-4 rounded-md'
+              style={{ backgroundColor: obj.backgroundColor }}
+            />
+          )}
+          <p className='line-clamp-1 text-lg font-medium'>
+            {obj.summary && obj.summary.length > 0
+              ? obj.summary
+              : obj.description}
+          </p>
+        </div>
         {dateTimeString && <p className='text-xs'>{dateTimeString}</p>}
 
         {obj.attendees && obj.attendees.length > 0 && (
@@ -55,11 +64,14 @@ function CalendarEvent(obj: gapi.client.calendar.Event) {
               {obj.attendees.length} Guests
             </p>
             <div className='ml-2 flex flex-col'>
-              {obj.attendees.map((attendee, index) => (
-                <div className='flex flex-col gap-1' key={index}>
-                  <p className='text-xs'>{attendee.email}</p>
-                </div>
-              ))}
+              {obj.attendees
+                .slice(0, Math.min(3, obj.attendees.length))
+                .map((attendee, index) => (
+                  <div className='flex flex-col gap-1' key={index}>
+                    <p className='text-xs'>{attendee.email}</p>
+                  </div>
+                ))}
+              {obj.attendees.length >= 4 && <p className='text-xs'>...</p>}
             </div>
           </div>
         )}
@@ -67,8 +79,13 @@ function CalendarEvent(obj: gapi.client.calendar.Event) {
           obj.organizer.email !== 'unknownorganizer@calendar.google.com' && (
             <div className='inline-flex items-center'>
               <EventOutlined fontSize='small' className='mr-2' />
-              <div className='flex flex-col gap-1'>
-                <p className='text-xs'>{obj.organizer.email}</p>
+              <div className='flex flex-col gap-1 overflow-hidden'>
+                <p
+                  className='overflow-hidden text-ellipsis text-xs'
+                  aria-label={obj.organizer.email}
+                >
+                  {obj.organizer.email}
+                </p>
               </div>
             </div>
           )}

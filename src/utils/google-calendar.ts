@@ -1,3 +1,5 @@
+import { Event } from 'gapi.calendar'
+
 const GOOGLE_CLIENT_URL = 'https://accounts.google.com/gsi/client'
 const GOOGLE_API_URL = 'https://apis.google.com/js/api.js'
 
@@ -95,19 +97,37 @@ export class GoogleCalendar {
     })
   }
 
-  async listEvents(): Promise<gapi.client.calendar.Event[]> {
-    return new Promise<gapi.client.calendar.Event[]>((res, rej) => {
+  async getCalendars(): Promise<gapi.client.calendar.CalendarList> {
+    return new Promise<gapi.client.calendar.CalendarList>((res, rej) => {
+      gapi.client.calendar.calendarList
+        .list()
+        .then((resp) => {
+          res(resp.result)
+        })
+        .catch((e) => {
+          rej(e)
+        })
+    })
+  }
+
+  async listEvents(
+    iCalUid: string,
+    backgroundColor?: string,
+  ): Promise<Event[]> {
+    return new Promise<Event[]>((res, rej) => {
       const params: gapi.client.calendar.EventsListParameters = {
-        calendarId: 'primary',
-        maxResults: 20,
+        calendarId: iCalUid,
+        maxResults: 10,
         showDeleted: false,
-        maxAttendees: 4,
         timeMin: new Date().toISOString(),
       }
       gapi.client.calendar.events
         .list(params)
         .then((resp) => {
-          res(resp.result.items)
+          const items = resp.result.items.map((value) => {
+            return { ...value, backgroundColor }
+          })
+          res(items)
         })
         .catch((e) => {
           rej(e)
